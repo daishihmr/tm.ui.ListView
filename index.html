@@ -7,8 +7,8 @@
 
 <canvas id="world"></canvas>
 
-<script src="./tmlib.min.js"></script>
-<script src="./precure.min.js"></script>
+<script src="./lib/tmlib.min.js"></script>
+<script src="./lib/precure.min.js"></script>
 <script src="./src/tm/ui/listview.js"></script>
 <script>
 tm.game.setup({
@@ -20,52 +20,87 @@ tm.define("GameScene", {
     init: function() {
         this.superInit();
         
-        var title = Label("選択してね", 30)
+        var topLabel = Label("選択してね", 30)
             .setFillStyle("black")
             .setPosition(SCREEN_CENTER_X, 30)
             .addChildTo(this);
         
-        var listView = ListView({
+        ListView({
             width: SCREEN_WIDTH - 200,
-            height: SCREEN_HEIGHT - 100,
-
+            height: SCREEN_HEIGHT - 200,
+            fillStyle: "transparent",
+            
+            // mode: [{ humanName: "変身前", precureName: "変身後" }],
             model: precure.allStars,
             // model: precure.suite.girls,
             
-            createView: function(item, index) {
-                var view = tm.ui.ListView.DEFAULT_PARAM.createView(item, index);
-                view.label.text = item.humanName;
-                view.interactive = true;
-                view.boundingType = "rect";
-
-                view.selected = RectangleShape({
-                    width: view.width,
-                    height: view.height,
-                    fillStyle: "rgba(255, 0, 0, 0.1)",
-                }).addChildTo(view).hide();
-
-                var nomove = false;
-                view.onpointingstart = function(e) {
-                    nomove = true;
-                };
-                view.onpointingmove = function(e) {
-                    if (e.app.pointing.deltaPosition.y !== 0) {
-                        nomove = false;
-                    }
-                }
-                view.onpointingend = function(e) {
-                    if (nomove) {
-                        title.text = item.precureName;
-                        listView.innerPanel.children.forEach(function(_){ _.selected.hide() })
-                        this.selected.show();
-                    }
-                };
-                return view;
+            createView: Item,
+            attach: function(item, view, index) {
+                view.showItem(item);
             },
         })
-            .setPosition(SCREEN_CENTER_X, SCREEN_CENTER_Y + 25)
-            .addChildTo(this);
+            .setPosition(SCREEN_CENTER_X, SCREEN_CENTER_Y)
+            .addChildTo(this)
+            .on("select", function(e) {
+                this.model.forEach(function(_){ _.selected = false });
+                e.item.selected = true;
+                this.refresh();
+
+                topLabel.text = e.item.precureName;
+            });
     }
+});
+
+tm.define("Item", {
+    superClass: "CanvasElement",
+    init: function() {
+        this.superInit();
+        this.width = SCREEN_WIDTH - 200;
+        this.height = 100;
+
+        this.fromJSON({
+            boundingType: "rect",
+            children: {
+                bg: {
+                    type: "RoundRectangleShape",
+                    init: {
+                        width: SCREEN_WIDTH - 200,
+                        height: 80,
+                        fillStyle: "white",
+                        strokeStyle: "black",
+                        cornerRadius: 40,
+                    }
+                },
+                selected: {
+                    type: "RoundRectangleShape",
+                    init: {
+                        width: SCREEN_WIDTH - 200,
+                        height: 80,
+                        fillStyle: "rgba(255, 0, 0, 0.1)",
+                        strokeStyle: "transparent",
+                        cornerRadius: 40,
+                    },
+                },
+                label: {
+                    type: "Label",
+                    init: [""],
+                    fillStyle: "black",
+                },
+            }
+        });
+    },
+    
+    showItem: function(item) {
+        this.label.text = item.humanName;
+        this.selected.visible = !!item.selected;
+        if (item.selected) {
+            this.label.on("enterframe", function(e) {
+                this.setScale(1.2 + Math.sin(e.app.frame * 0.3) * 0.2);
+            });
+        } else {
+            this.label.clearEventListener("enterframe");
+        }
+    },
 });
 </script>
 
