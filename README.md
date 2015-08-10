@@ -36,7 +36,22 @@ var model = [
 ];
 
 tm.define("CustomView", {
-    ...
+    superClass: "tm.display.CanvasElement",
+    init: function() {
+        this.superInit();
+        this.fromJSON({
+            children: {
+                numberLabel: {
+                    type: "tm.display.Label",
+                    x: 0, y: 0
+                },
+                nameLabel: {
+                    type: "tm.display.Label",
+                    x: 100, y: 0
+                }
+            }
+        });
+    }
 });
 
 var listView = ListView({
@@ -57,9 +72,9 @@ var listView = ListView({
 ```js
 listView.on("select", function(e) {
 
-    console.log(e.item); // => item of model
-    console.log(e.view); // => view
-    console.log(e.index); // => index in model
+    console.log(e.item); // => selected item
+    console.log(e.view); // => selected view
+    console.log(e.index); // => selected index
     
 });
 ```
